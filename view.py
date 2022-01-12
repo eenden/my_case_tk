@@ -1,4 +1,4 @@
-from tkinter import Tk, Button, Label, PhotoImage, Frame, ttk, simpledialog, Toplevel, Entry, filedialog
+from tkinter import Tk, Button, Label, PhotoImage, Frame, ttk, simpledialog, Toplevel, Entry, filedialog, Text, END
 from tkcalendar import DateEntry
 from pprint import pprint
 
@@ -7,7 +7,7 @@ from control import get_data, load_tickers, save_as_tickers, smartlab_import
 class View:
 
 	def __init__(self, root):
-
+		self.info = None
 		self.master = root
 
 		# Toolbar
@@ -15,7 +15,7 @@ class View:
 		shortcut_bar.pack(expand='no', fill='x')
 
 		# Toolbar icons
-		icons = ('openfile', 'save_as_file', 'import',)
+		icons = ('openfile', 'save_as_file', 'import', )
 		for i, icon in enumerate(icons):
 			tool_bar_icon = PhotoImage(file=f'icons/tb_{icon}.png').subsample(x=16, y=16)
 			tool_bar = Button(shortcut_bar, image=tool_bar_icon, command=eval(f'self.cmd_{icon}'))
@@ -61,20 +61,21 @@ class View:
 
 	def run(self):
 		# retrieve data from site
-		info = get_data(self.cal.get_date(), self.tickers)
+		self.info = get_data(self.cal.get_date(), self.tickers)
 		
 		# clear content
 		self.content.delete(*self.content.get_children())
 
 		# display data
-		for row, (k, v) in enumerate(sorted(info.items(), key=lambda x: x[1]['part'], reverse=True), start=1):
+		for row, (k, v) in enumerate(sorted(self.info.items(), key=lambda x: x[1]['part'], reverse=True), start=1):
 			if v['part'] > 10:
 				self.content.insert('', 'end', values=(v['title'], k, v['count'], v['price'], v['sum'], v['part']), tags=('red'))
 			else:
 				self.content.insert('', 'end', values=(v['title'], k, v['count'], v['price'], v['sum'], v['part']))
 
 		# results
-		self.content.insert('', 'end', values=('Итого: ', '', '', '', '', round(sum([s['sum'] for s in info.values()]), 2)))		
+		self.results = round(sum([s['sum'] for s in self.info.values()]), 2)
+		self.content.insert('', 'end', values=('Итого: ', '', '', '', '', self.results))		
 
 
 	def cmd_import(self):
@@ -102,9 +103,9 @@ class View:
 			self.show_tickers()
 
 	def cmd_save_as_file(self):
-		filename = filedialog.asksaveasfilename(defaultextension='*.csv', filetypes=[('CSV documents', '*.csv')])
+		filename = filedialog.asksaveasfilename(defaultextension='*.csv', filetypes=[('CSV documents', '*.csv'), ('HTML documents', '*.html')])
 		if filename:
-			save_as_tickers(filename, self.tickers)
+			save_as_tickers(filename, self.info)
 
 def main():
 	root = Tk()

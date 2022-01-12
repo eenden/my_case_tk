@@ -3,7 +3,7 @@ from json import loads
 from pprint import pprint
 import csv
 from bs4 import BeautifulSoup as Bs
-
+from jinja2 import Template
 
 def get_prices(tickers, date):
 	prices = {}
@@ -38,11 +38,25 @@ def load_tickers(filename):
 	except Exception as err:
 		return None
 
-def save_as_tickers(filename, rows):
-	with open(filename, 'w') as f:
-		writer = csv.writer(f, delimiter=';')
-		for row in rows:
-			writer.writerow(row)
+def save_as_tickers(filename, info):
+	extension = filename.split('.')[-1]
+	pprint(info)
+	if extension == 'csv':
+		with open(filename, 'w') as f:
+			writer = csv.writer(f, delimiter=';')
+			for ticker, results in info.items():
+				writer.writerow((
+					results['title'],
+					ticker,
+					results['count'],
+					))
+	elif extension == 'html':
+		with open('templates/my_case.html') as html:
+			template = Template(html.read())
+			content = template.render(info=info)
+			with open(filename, 'w') as f:
+				f.write(content)
+
 
 
 def get_data(date, tickers):
